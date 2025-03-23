@@ -1,0 +1,5 @@
+spring:
+  application:
+    name: qr-scan-login
+server:
+  port: 8081
