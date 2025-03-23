@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>扫码登录演示</title>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 2rem;
+            font-family: Arial, sans-serif;
+            background: #f0f2f5;
+        }
+
+        .button {
+            padding: 12px 24px;
+            font-size: 16px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin: 1rem;
+        }
+
+        .scan-btn {
+            background: #1890ff;
+            color: white;
+        }
+
+        .scan-btn:hover {
+            background: #40a9ff;
+        }
+
+        .confirm-btn {
+            background: #52c41a;
+            color: white;
+        }
+
+        .confirm-btn:hover {
+            background: #73d13d;
+        }
+
+        .status-box {
+            padding: 20px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            margin: 1rem;
+            min-width: 300px;
+            text-align: center;
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+<!-- 初始扫描按钮 -->
+<button class="button scan-btn" id="scanBtn">扫描二维码</button>
+
+<!-- 扫描后状态容器 -->
+<div class="status-box hidden" id="confirmSection">
+    <p>已扫描用户：<span id="userInfo"></span></p>
+    <p>临时Token：<code id="tempToken"></code></p>
+    <button class="button confirm-btn" id="confirmBtn">确认登录</button>
+</div>
+
+<script>
+    // DOM元素
+    const scanBtn = document.getElementById('scanBtn');
+    const confirmSection = document.getElementById('confirmSection');
+    const userInfoSpan = document.getElementById('userInfo');
+    const tempTokenSpan = document.getElementById('tempToken');
+    const confirmBtn = document.getElementById('confirmBtn');
+
+    // 模拟数据生成
+    function generateTestData() {
+        const names = ['张三', '李四', '王五', '赵六'];
+        const genders = ['男', '女'];
+
+        return {
+            name: names[Math.floor(Math.random() * names.length)],
+            birthday: `199${Math.floor(Math.random() * 10)}-0${Math.floor(Math.random() * 9 + 1)}-${Math.floor(Math.random() * 28 + 1)}`,
+            gender: genders[Math.floor(Math.random() * genders.length)],
+            qrId: `20011021`
+        };
+    }
+
+    // 模拟扫描请求
+    async function handleScan() {
+        const testData = generateTestData();
+
+        try {
+            // 发送扫描请求
+            const response = await axios.post('http://localhost:8081/qr/scan/' + testData.qrId, {
+                ...testData
+            });
+
+            // 显示确认界面
+            userInfoSpan.textContent = `${testData.name} (${testData.gender}, ${testData.birthday})`;
+            tempTokenSpan.textContent = response.data;
+            scanBtn.classList.add('hidden');
+            confirmSection.classList.remove('hidden');
+        } catch (error) {
+            console.error('扫描请求失败:', error);
+            alert('扫描失败，请重试');
+        }
+    }
+
+    // 确认登录处理
+    async function handleConfirm() {
+        const token = tempTokenSpan.textContent;
+
+        try {
+            // 发送确认请求
+            await axios.post('http://localhost:8081/qr/confirm/' + token);
+
+            // 重置界面
+            scanBtn.classList.remove('hidden');
+            confirmSection.classList.add('hidden');
+            alert('登录成功！');
+        } catch (error) {
+            console.error('确认请求失败:', error);
+            alert('确认失败，请重试');
+        }
+    }
+
+    // 事件监听
+    scanBtn.addEventListener('click', handleScan);
+    confirmBtn.addEventListener('click', handleConfirm);
+</script>
+</body>
+</html>
